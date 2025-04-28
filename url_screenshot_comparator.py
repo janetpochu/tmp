@@ -189,19 +189,28 @@ def process_results(results):
         
         # Step 2: Compare URLs
         url_diff = compare_urls(original_redirect, target_redirect)
-        
-        #print(f"in main : url_diff ${url_diff}")
         url_comparisons.append(url_diff)
         
         # Step 3: Compare images
-     
-        
-        orig_path = os.path.join( original_folder, original_screenshot + ".png")
-        targ_path = os.path.join( target_folder, target_screenshot + ".png")
+        orig_path = os.path.join(original_folder, original_screenshot + ".png")
+        targ_path = os.path.join(target_folder, target_screenshot + ".png")
         diff_path = f"diff_{uuid.uuid4()}.png"
-        
-        image_comparisons_text.append(compare_images_pixel_by_pixel(orig_path, targ_path,diff_path))
-        image_comparisons.append(diff_path)
+
+        orig_no_screen = original_screenshot == "screenshot_NO_SCREEN_CAPTURED" or not os.path.exists(orig_path)
+        targ_no_screen = target_screenshot == "screenshot_NO_SCREEN_CAPTURED" or not os.path.exists(targ_path)
+
+        if orig_no_screen and targ_no_screen:
+            image_comparisons_text.append("Both: NO screen captured")
+            image_comparisons.append("")  # No diff image
+        elif orig_no_screen:
+            image_comparisons_text.append("Original: NO screen captured")
+            image_comparisons.append("")  # No diff image
+        elif targ_no_screen:
+            image_comparisons_text.append("Target: NO screen captured")
+            image_comparisons.append("")  # No diff image
+        else:
+            image_comparisons_text.append(compare_images_pixel_by_pixel(orig_path, targ_path, diff_path))
+            image_comparisons.append(diff_path)
     
     # Step 4: Generate HTML report
     report_path = generate_html_report(results, url_comparisons,image_comparisons_text, image_comparisons)
