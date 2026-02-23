@@ -1,0 +1,52 @@
+I have a Playwright TypeScript automation script that handles a multi-step login flow 
+with SMS 2FA. I need you to convert this into a Chrome Browser Extension using 
+Manifest V3, content scripts, and background service workers.
+
+Here is my Playwright script:
+[PASTE YOUR SCRIPT HERE]
+
+The extension should:
+1. Show a popup with a dropdown list of usernames to select from
+2. After username selection, automate the remaining steps on the active tab:
+   - Detect and fill the password field (or click password URL if field not found)
+   - Click the SMS authenticate button
+   - Open a new tab to [SPLUNK URL], navigate to the entity, select it, 
+     input the captured mobile number, and wait for the SMS code
+   - Return to the original tab and input the SMS code automatically
+
+Use Manifest V3 architecture with:
+- popup.html + popup.js for the username selection UI
+- content.js for DOM interaction on the login page
+- background.js as the service worker for tab management
+- chrome.tabs, chrome.scripting, and chrome.storage APIs
+
+Key Architecture Differences to Tell Copilot About
+PlaywrightChrome Extension Equivalent
+page.fill()document.querySelector().value =
+page.click()element.click()
+page.waitForSelector()MutationObserver or polling
+browser.newPage()chrome.tabs.create()
+page.goto()chrome.tabs.update()
+Inter-page commschrome.runtime.sendMessage()
+
+For the username dropdown (Task 1):
+Create a popup.html with a styled dropdown that loads a configurable 
+list of usernames from chrome.storage.sync, and a "Start Login" button 
+that sends the selected username to the content script via chrome.runtime.sendMessage
+
+
+For the SMS capture flow (Steps 4–6):
+The content script needs to:
+1. After clicking SMS button, capture the mobile number shown on screen using regex
+2. Send that mobile number via chrome.runtime.sendMessage to background.js
+3. Background.js opens a new tab to [SPLUNK URL]
+4. A second content script on the Splunk tab fills the mobile number and waits for the SMS code
+5. Once found, send the SMS code back to the original tab's content script to fill and submit
+
+my-login-extension/
+├── manifest.json          ← MV3 config, permissions
+├── popup.html             ← Username selector UI
+├── popup.js               ← Sends selected username to content script
+├── content.js             ← Runs on login page, handles steps 1-4 & 6
+├── splunk-content.js      ← Runs on Splunk tab, handles step 5
+└── background.js          ← Service worker, manages tab creation & messaging
